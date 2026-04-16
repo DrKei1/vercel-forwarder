@@ -1,28 +1,30 @@
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
+from http.server import BaseHTTPRequestHandler, HTTPServer
+from collections import defaultdict
 
-export default async function handler(req, res) {
-  const session = req.headers['x-session-id'] || "default";
+sessions = defaultdict(list)
 
-  const chunks = [];
-  for await (const chunk of req) {
-    chunks.push(chunk);
-  }
+class Handler(BaseHTTPRequestHandler):
+    def do_POST(self):
+        session_id = self.headers.get("x-session-id")
 
-  const body = Buffer.concat(chunks);
+        length = int(self.headers.get('Content-Length', 0))
+        data = self.rfile.read(length)
 
-  const response = await fetch("http://77.68.22.95:8080", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/octet-stream",
-      "x-session-id": session
-    },
-    body: body,
-  });
+        # ذخیره دیتا
+        sessions[session_id].append(data)
 
-  const data = await response.arrayBuffer();
-  res.status(200).send(Buffer.from(data));
-}
+        # برگردوندن دیتاهای قبلی (simulate downstream)
+        response = b"".join(sessions[session_id])
+        sessions[session_id].clear()
+
+        self.send_response(200)
+        self.send_header("Content-Type", "application/octet-stream")
+        self.end_headers()
+        self.wfile.write(response)
+
+    def log_message(self, *args):
+        return
+
+server = HTTPServer(("0.0.0.0", 8080), Handler)
+print("Session server running")
+server.serve_forever()
