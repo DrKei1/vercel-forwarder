@@ -27,7 +27,8 @@ export default async function handler(req, res) {
     res.status(200);
     res.setHeader("Content-Type", "application/octet-stream");
     res.send(Buffer.from(data));
+
   } catch (e) {
-    res.status(500).send("error");
+    res.status(200).send("vercel-error");
   }
 }
