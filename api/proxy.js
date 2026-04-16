@@ -1,5 +1,5 @@
 const TARGET_HOST = "77.68.22.95";
-const TARGET_PORT = "10003";
+const TARGET_PORT = "80";
 const TARGET_PATH = "/hu";
 
 export default async function handler(req, res) {
